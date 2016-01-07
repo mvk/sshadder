@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import argparse
-import json
 import getpass
+import json
 import os
-import time
 import pexpect
 import sys
 
@@ -43,7 +42,10 @@ def get_config(cli_options=None):
 def strlist(data):
     try:
         int(data)
-        raise argparse.ArgumentTypeError("this parameter must be a string, optionally delimited with ','")
+        raise argparse.ArgumentTypeError(" ".join([
+            "this parameter must be a string,"
+            "optionally delimited with ','",
+        ]))
     except TypeError:
         pass
     return data.split(',')
@@ -123,4 +125,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
