@@ -1,0 +1,9 @@
+.sshadder.yaml
+.eggs
+.idea
+dist
+build
+*.egg-info
+*.py[co]
+AUTHORS
+ChangeLog
