@@ -34,20 +34,22 @@ def get_config(cli_options=None):
             curr_conf_data = json.loads(f.read())
             ssh_home = curr_conf_data.get('ssh_home', result.get('ssh_home'))
             if 'keys' in curr_conf_data:
-                curr_conf_data.update(keys=[os.path.join(ssh_home, key) for key in curr_conf_data.get('keys')])
+                keys = []
+                for item in curr_conf_data.get('keys'):
+                    curr_key = item.get('path')
+                    item.update(path=os.path.join(ssh_home, curr_key))
+                    keys.append(item)
+                curr_conf_data.update(keys=keys)
             result.update(**curr_conf_data)
     return result
 
 
 def strlist(data):
-    try:
-        int(data)
+    if not isinstance(data, str):
         raise argparse.ArgumentTypeError(" ".join([
             "this parameter must be a string,"
             "optionally delimited with ','",
         ]))
-    except TypeError:
-        pass
     return data.split(',')
 
 
@@ -102,14 +104,21 @@ def ssh_add(key, password):
         print("FAILED [exception data follows]")
         print("pexpect error: {pe}".format(**locals()), file=sys.stderr)
         return 1
-
     print("Done".format(**locals()))
-    return ssh_adder.status
+    # print("my object: {0}".format(str(ssh_adder)))
+    result = ssh_adder.status or ssh_adder.before.strip()
+    return result
 
 
 def add_keys(keys, password):
-    for key_file in keys:
-        result = ssh_add(key_file, password)
+    for key_item in keys:
+        if not isinstance(key_item, dict):
+            key_item = dict(path=key_item)
+
+        key_file = key_item.get('path')
+        key_password = key_item.get('password', password)
+        result = ssh_add(key_file, key_password)
+        print("Result: {result}".format(**locals()))
         assert 0 == result,\
             "Failed to add a key: {key_file}".format(**locals())
     return 0
