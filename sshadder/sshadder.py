@@ -45,7 +45,7 @@ def get_config(cli_options=None):
 
 
 def strlist(data):
-    if not isinstance(data, str):
+    if not isinstance(data, str) or data is None:
         raise argparse.ArgumentTypeError(" ".join([
             "this parameter must be a string,"
             "optionally delimited with ','",
@@ -105,9 +105,7 @@ def ssh_add(key, password):
         print("pexpect error: {pe}".format(**locals()), file=sys.stderr)
         return 1
     print("Done".format(**locals()))
-    # print("my object: {0}".format(str(ssh_adder)))
-    result = ssh_adder.status or ssh_adder.before.strip()
-    return result
+    return 0
 
 
 def add_keys(keys, password):
@@ -118,7 +116,6 @@ def add_keys(keys, password):
         key_file = key_item.get('path')
         key_password = key_item.get('password', password)
         result = ssh_add(key_file, key_password)
-        print("Result: {result}".format(**locals()))
         assert 0 == result,\
             "Failed to add a key: {key_file}".format(**locals())
     return 0

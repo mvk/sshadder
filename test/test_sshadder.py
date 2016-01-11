@@ -1,4 +1,4 @@
-from sshadder import sshadder
+import sshadder
 import argparse
 
 
