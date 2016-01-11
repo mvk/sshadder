@@ -1,6 +1,8 @@
 .sshadder.yaml
+.cache
 .eggs
 .idea
+.tox
 dist
 build
 *.egg-info
