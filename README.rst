@@ -14,6 +14,14 @@ Then I need to load them, and it takes a minute or two.
 
 This project aims to save that time.
 
+Installing
+==========
+
+in virtualenv: ::
+    pip install git+ssh://git@github.com/mvk/sshadder.git
+
+system-wide:    
+I think this project is too young to be packaged or installed system-wide. Honestly :)
 
 Usage
 =====
