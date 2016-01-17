@@ -13,13 +13,13 @@ default_conf_file = 'sshadder.yaml'
 user_home = os.environ.get('HOME', os.path.expanduser('~'))
 default_ssh_home = os.path.join(user_home, '.ssh')
 default_confs = [
-    '.'.join(['', default_conf_file]),
+    os.path.join(os.getcwd(), '.'.join(['', default_conf_file])),
     os.path.join(user_home, default_conf_file),
     os.path.join('/etc/sshadder', default_conf_file),
 ]
 
 
-def getpass_double_prompt(desciption, max_attempts=3):
+def getpass_double_prompt(description, max_attempts=3):
     result = None
     count = 0
     while not result:
@@ -52,14 +52,15 @@ def get_config(cli_options=None):
         with open(conf_file, 'rb') as f:
             curr_conf_data = json.loads(f.read())
             ssh_home = curr_conf_data.get('ssh_home', result.get('ssh_home'))
+            keys = []
             if 'keys' in curr_conf_data:
-                keys = []
                 for item in curr_conf_data.get('keys'):
                     curr_key = item.get('path')
-                    item.update(path=os.path.join(ssh_home, curr_key))
+                    if not os.path.exists(curr_key):
+                        item.update(path=os.path.join(ssh_home, curr_key))
                     keys.append(item)
-                curr_conf_data.update(keys=keys)
-            result.update(**curr_conf_data)
+            curr_conf_data.update(keys=keys)
+        result.update(**curr_conf_data)
     return result
 
 
@@ -67,10 +68,10 @@ def gen_config(cli_options=None):
     if not cli_options:
         cli_options = dict(config_data=dict(keys=[]))
     config_data = cli_options.get("config_data", dict(keys=[]))
-    config_fname = cli_options.get(
-        "config_fname",
-        raw_input("Enter config file path [default: ./{0}: ".format(default_confs[0]))
-    )
+    config_fname = raw_input("Enter config file path [default: {0}: ".format(default_confs[0]))
+    if not config_fname:
+        config_fname = cli_options.get("config_fname", default_confs[0])
+
     assert os.path.isdir(os.path.dirname(config_fname))
     keys_data = []
     master_password = getpass_double_prompt("Master Password")
@@ -152,6 +153,12 @@ def parse_args(args=sys.argv[1:]):
         formatter_class=CoolFormatter
     )
     parser.add_argument(
+        '--init', '-i',
+        action='store_true',
+        dest='init',
+        help='Create configuration file',
+    )
+    parser.add_argument(
         '--conf', '-c',
         dest='conf_file',
         help='Specify sshadder config yaml file',
@@ -222,15 +229,19 @@ def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
     return wrapper(ciphertext)
 
 
-def add_keys(keys, password, decryptor=None):
+def add_keys(keys, master_password, decryptor=None):
+
+    if not decryptor:
+        decryptor = lambda x, y: x
+
     for key_item in keys:
         if not isinstance(key_item, dict):
             key_item = dict(path=key_item)
 
         key_file = key_item.get('path')
-        key_password_hashed = key_item.get('password', password)
-        decryptor = decryptor if decryptor else lambda x, y: x
-        result = ssh_add(key_file, decryptor(password, key_password_hashed))
+        key_password_hashed = key_item.get('password', master_password)
+
+        result = ssh_add(key_file, decryptor(master_password, key_password_hashed))
         assert 0 == result,\
             "Failed to add a key: {key_file}".format(**locals())
     return 0
@@ -239,10 +250,14 @@ def add_keys(keys, password, decryptor=None):
 def main():
     cli_options = parse_args(args=sys.argv[1:])
     config = get_config(cli_options=cli_options.__dict__)
-    if not config.get('password'):
-        password = getpass.getpass("Enter the password: ")
-        config.update(password=password)
-    return add_keys(config.get('keys'), config.get('password'))
+    if cli_options.init:
+        # initial setup flow:
+        result = gen_config(cli_options.__dict__)
+        return result
+
+    master_password = getpass.getpass("Enter master password: ")
+
+    return add_keys(config.get('keys'), master_password, decryptor=simple_decryptor)
 
 if __name__ == '__main__':
     sys.exit(main())
