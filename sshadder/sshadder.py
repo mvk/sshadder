@@ -6,6 +6,8 @@ import json
 import os
 import pexpect
 import sys
+import base64
+import simplecrypt
 
 default_conf_file = 'sshadder.yaml'
 user_home = os.environ.get('HOME', os.path.expanduser('~'))
@@ -17,8 +19,25 @@ default_confs = [
 ]
 
 
-def get_config(cli_options=None):
+def getpass_double_prompt(desciption, max_attempts=3):
+    result = None
+    count = 0
+    while not result:
+        password1 = getpass.getpass("Enter {description}: ".format(**locals()))
+        password2 = getpass.getpass("Repeat {description}: ".format(**locals()))
+        if password1 != password2:
+            count += 1
+            print("WARNING: passwords do not match, please repeat (attempt {0} out of {0})".format(count, max_attempts))
+            continue
+        result = password1
+    if not result:
+        print("WARNING: Please re-run this application", file=sys.stderr)
+        msg_fmt = "Failed to accept {description} more {max_attempts} times."
+        raise argparse.ArgumentError(message=msg_fmt.format(**locals()))
+    return result
 
+
+def get_config(cli_options=None):
     if not cli_options:
         return {}
     result = {}
@@ -42,6 +61,69 @@ def get_config(cli_options=None):
                 curr_conf_data.update(keys=keys)
             result.update(**curr_conf_data)
     return result
+
+
+def gen_config(cli_options=None):
+    if not cli_options:
+        cli_options = dict(config_data=dict(keys=[]))
+    config_data = cli_options.get("config_data", dict(keys=[]))
+    config_fname = cli_options.get(
+        "config_fname",
+        raw_input("Enter config file path [default: ./{0}: ".format(default_confs[0]))
+    )
+    assert os.path.isdir(os.path.dirname(config_fname))
+    keys_data = []
+    master_password = getpass_double_prompt("Master Password")
+    print("Master password accepted, it will be used to encrypt/decrypt the passwords")
+    print("WARNING: Please remember the Master password, otherwise the encrypted data will be useless")
+    enough = False
+    save = False
+    while not enough:
+        key_path = raw_input("Enter private key file name: ")
+        if not os.path.exists(key_path):
+            print("WARNING: the file given does not exist")
+            continue
+        if not os.path.isfile(key_path):
+            print("WARNING: the file given is not a file")
+            continue
+        print("The file given is accepted")
+        key_password_plain = None
+        try:
+            key_password_plain = getpass_double_prompt(
+                "Key {key_path} password".format(**locals()),
+                max_attempts=1
+            )
+        except argparse.ArgumentError, ae:
+            print("WARNING: Failed to accept key password.")
+        if not key_password_plain:
+            print("Automatically re-iterating")
+            print("Please re-enter both key and its password")
+            continue
+
+        keys_data.append(dict(
+            path=key_path,
+            password=simple_encryptor(master_password, key_password_plain)
+        ))
+
+        print("Added the data on {key_path}".format(**locals()))
+        response = raw_input("Press 'c' to continue, 's' to quit and save, 'q' to quit and abort")
+        if 'c' == response:
+            continue
+        elif 'q' == response:
+            enough = True
+            save = False
+        elif 's' == response:
+            enough = True
+            save = True
+
+    if not save:
+        print("Not saving anything")
+        return 0
+
+
+    with open(config_fname, 'wb') as fd:
+        fd.write(json.dumps(dict(keys=keys_data), indent=2))
+
 
 
 def strlist(data):
@@ -93,6 +175,15 @@ def parse_args(args=sys.argv[1:]):
 
 
 def ssh_add(key, password):
+    """
+    Adds a keyfile protected by PLAIN TEXT password
+
+    :param key: the private key file path
+    :type key: str
+    :param password: password of the key
+    :type password: str
+
+    """
     print("Adding the key: {key} ... ".format(**locals()), end='')
     ssh_add_cmd = 'ssh-add {key}'
     ssh_adder = pexpect.spawn(ssh_add_cmd.format(**locals()))
@@ -108,14 +199,38 @@ def ssh_add(key, password):
     return 0
 
 
-def add_keys(keys, password):
+def simple_decryptor(password, ciphertext, enc='utf-8', unwrapper=None):
+    """
+    Decrypt ciphertext using password
+
+    """
+    if not unwrapper:
+        unwrapper = base64.b64decode
+
+    plaintext = simplecrypt.decrypt(password, unwrapper(ciphertext)).decode(enc)
+    return plaintext
+
+
+def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
+    """
+    Decrypt ciphertext using password
+
+    """
+    if not wrapper:
+        wrapper = base64.b64encode
+    ciphertext = simplecrypt.encrypt(password, ciphertext)
+    return wrapper(ciphertext)
+
+
+def add_keys(keys, password, decryptor=None):
     for key_item in keys:
         if not isinstance(key_item, dict):
             key_item = dict(path=key_item)
 
         key_file = key_item.get('path')
-        key_password = key_item.get('password', password)
-        result = ssh_add(key_file, key_password)
+        key_password_hashed = key_item.get('password', password)
+        decryptor = decryptor if decryptor else lambda x, y: x
+        result = ssh_add(key_file, decryptor(password, key_password_hashed))
         assert 0 == result,\
             "Failed to add a key: {key_file}".format(**locals())
     return 0

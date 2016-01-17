@@ -1,5 +1,7 @@
-import sshadder
 import argparse
+import sshadder
+import simplecrypt
+import base64
 
 
 def test_strlist():
@@ -33,6 +35,20 @@ def test_strlist():
     assert expected == actual
 
 
+def test_simple_encryptor():
+    password = 'myc00lp@ssw0rd'
+    expected = 'myc00lerp@ssw0rd!'
+    cipher = sshadder.simple_encryptor(password, expected)
+    actual = simplecrypt.decrypt(password, base64.b64decode(cipher)).encode('utf-8')
+    assert expected == actual
+
+
+def test_simple_decryptor():
+    password = 'myc00lp@ssw0rd'
+    expected = 'myc00lerp@ssw0rd!'
+    cipher = base64.b64encode(simplecrypt.encrypt(password, expected))
+    actual = sshadder.simple_decryptor(password, cipher)
+    assert expected == actual
 
 
 #  TODO: add testing of return codes
