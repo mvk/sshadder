@@ -21,7 +21,7 @@ Usage
 First time:
 -----------
 
-Just run::
+Just run:::
     sshadder -i
 
 The text will guide you to give a master password (not saved anywhere), and then iterate over
@@ -33,16 +33,16 @@ When you're ready, choose 's' option to save and quit. Each password is encrypte
 
 Next times:
 -----------
-Run::
+
+Run:::
     sshadder
 
 Please refer to ``--help``, which shows default locations it's looking for the yaml files.
 
 What it does not
 ~~~~~~~~~~~~~~~~
-::
-    SSH Agent management, You are responsible to run it,
-    and have SSH_AUTH_SOCK properly pointing to the desired SSH Agent.
+
+SSH Agent management. You are responsible to run it, and have ``SSH_AUTH_SOCK`` properly pointing to the desired SSH Agent.
 
 What it does
 ~~~~~~~~~~~~
