@@ -6,4 +6,5 @@ try:
 except pkg_resources.DistributionNotFound:
     __version__ = '0.0.0-unknown'
     pass
-from sshadder import *
+
+from sshadder import main

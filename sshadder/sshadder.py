@@ -23,17 +23,28 @@ def getpass_double_prompt(description, max_attempts=3):
     result = None
     count = 0
     while not result:
-        password1 = getpass.getpass("Enter {description}: ".format(**locals()))
-        password2 = getpass.getpass("Repeat {description}: ".format(**locals()))
+        password1 = getpass.getpass(
+            "Enter {description}: ".format(**locals())
+        )
+        password2 = getpass.getpass(
+            "Repeat {description}: ".format(**locals())
+        )
         if password1 != password2:
             count += 1
-            print("WARNING: passwords do not match, please repeat (attempt {0} out of {0})".format(count, max_attempts))
+            msg_fmt = " ".join([
+                "WARNING: passwords do not match,",
+                "please repeat (attempt {0} out of {0})",
+            ])
+            print(msg_fmt.format(count, max_attempts))
             continue
         result = password1
     if not result:
         print("WARNING: Please re-run this application", file=sys.stderr)
         msg_fmt = "Failed to accept {description} more {max_attempts} times."
-        raise argparse.ArgumentError(message=msg_fmt.format(**locals()))
+        raise argparse.ArgumentError(
+                'password',
+                message=msg_fmt.format(**locals())
+        )
     return result
 
 
@@ -68,15 +79,22 @@ def gen_config(cli_options=None):
     if not cli_options:
         cli_options = dict(config_data=dict(keys=[]))
     config_data = cli_options.get("config_data", dict(keys=[]))
-    config_fname = raw_input("Enter config file path [default: {0}: ".format(default_confs[0]))
+    prompt_fmt = "Enter config file path [default: {0}]: "
+    config_fname = raw_input(prompt_fmt.format(default_confs[0]))
     if not config_fname:
         config_fname = cli_options.get("config_fname", default_confs[0])
 
     assert os.path.isdir(os.path.dirname(config_fname))
     keys_data = []
     master_password = getpass_double_prompt("Master Password")
-    print("Master password accepted, it will be used to encrypt/decrypt the passwords")
-    print("WARNING: Please remember the Master password, otherwise the encrypted data will be useless")
+    print(" ".join([
+        "Master password accepted,",
+        "it will be used to encrypt/decrypt the passwords",
+    ]))
+    print(" ".join([
+        "WARNING: Please remember the Master password,",
+        "otherwise the encrypted data will be useless",
+    ]))
     enough = False
     save = False
     while not enough:
@@ -107,7 +125,13 @@ def gen_config(cli_options=None):
         ))
 
         print("Added the data on {key_path}".format(**locals()))
-        response = raw_input("Press 'c' to continue, 's' to quit and save, 'q' to quit and abort")
+        prompt = " ".join([
+            "Press",
+            "'c' to continue,",
+            "'s' to quit and save,",
+            "or 'q' to quit and abort",
+        ])
+        response = raw_input(prompt)
         if 'c' == response:
             continue
         elif 'q' == response:
@@ -121,10 +145,8 @@ def gen_config(cli_options=None):
         print("Not saving anything")
         return 0
 
-
     with open(config_fname, 'wb') as fd:
         fd.write(json.dumps(dict(keys=keys_data), indent=2))
-
 
 
 def strlist(data):
@@ -194,7 +216,10 @@ def ssh_add(key, password):
     print("Adding the key: {key} ... ".format(**locals()), end='')
     ssh_add_cmd = 'ssh-add {key}'
     ssh_adder = pexpect.spawn(ssh_add_cmd.format(**locals()))
-    ssh_adder.expect('Enter passphrase for {key}:'.format(**locals()), timeout=0.5)
+    ssh_adder.expect(
+        'Enter passphrase for {key}:'.format(**locals()),
+        timeout=0.5
+    )
     ssh_adder.sendline(password)
     try:
         ssh_adder.expect(pexpect.EOF, timeout=0.5)
@@ -214,7 +239,10 @@ def simple_decryptor(password, ciphertext, enc='utf-8', unwrapper=None):
     if not unwrapper:
         unwrapper = base64.b64decode
 
-    plaintext = simplecrypt.decrypt(password, unwrapper(ciphertext)).decode(enc)
+    plaintext = simplecrypt.decrypt(
+            password,
+            unwrapper(ciphertext)
+    ).decode(enc)
     return plaintext
 
 
@@ -232,7 +260,8 @@ def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
 def add_keys(keys, master_password, decryptor=None):
 
     if not decryptor:
-        decryptor = lambda x, y: x
+        def decryptor(x, y):
+            return x
 
     for key_item in keys:
         if not isinstance(key_item, dict):
@@ -241,7 +270,10 @@ def add_keys(keys, master_password, decryptor=None):
         key_file = key_item.get('path')
         key_password_hashed = key_item.get('password', master_password)
 
-        result = ssh_add(key_file, decryptor(master_password, key_password_hashed))
+        result = ssh_add(
+            key_file,
+            decryptor(master_password, key_password_hashed)
+        )
         assert 0 == result,\
             "Failed to add a key: {key_file}".format(**locals())
     return 0
@@ -256,8 +288,11 @@ def main():
         return result
 
     master_password = getpass.getpass("Enter master password: ")
-
-    return add_keys(config.get('keys'), master_password, decryptor=simple_decryptor)
+    return add_keys(
+        config.get('keys'),
+        master_password,
+        decryptor=simple_decryptor
+    )
 
 if __name__ == '__main__':
     sys.exit(main())

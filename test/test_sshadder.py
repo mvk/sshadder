@@ -1,5 +1,5 @@
 import argparse
-import sshadder
+import sshadder.sshadder as sshadder
 import simplecrypt
 import base64
 
@@ -22,7 +22,6 @@ def test_strlist():
         assert True
     else:
         assert False, "unexpected error type"
-
 
     input_item = ""
     expected = [""]
