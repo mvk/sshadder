@@ -21,7 +21,7 @@ Usage
 First time:
 -----------
 
-Just run:::
+Just run: ::
 
     sshadder -i
 
@@ -35,7 +35,7 @@ When you're ready, choose 's' option to save and quit. Each password is encrypte
 Next times:
 -----------
 
-Run:::
+Run: ::
 
     sshadder
 
