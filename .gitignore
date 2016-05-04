@@ -3,6 +3,7 @@
 .eggs
 .idea
 .tox
+.ropeproject
 dist
 build
 *.egg-info
