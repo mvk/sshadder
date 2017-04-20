@@ -42,8 +42,8 @@ def getpass_double_prompt(description, max_attempts=3):
         print("WARNING: Please re-run this application", file=sys.stderr)
         msg_fmt = "Failed to accept {description} more {max_attempts} times."
         raise argparse.ArgumentError(
-                'password',
-                message=msg_fmt.format(**locals())
+            'password',
+            message=msg_fmt.format(**locals())
         )
     return result
 
@@ -240,8 +240,8 @@ def simple_decryptor(password, ciphertext, enc='utf-8', unwrapper=None):
         unwrapper = base64.b64decode
 
     plaintext = simplecrypt.decrypt(
-            password,
-            unwrapper(ciphertext)
+        password,
+        unwrapper(ciphertext)
     ).decode(enc)
     return plaintext
 
@@ -293,6 +293,7 @@ def main():
         master_password,
         decryptor=simple_decryptor
     )
+
 
 if __name__ == '__main__':
     sys.exit(main())
