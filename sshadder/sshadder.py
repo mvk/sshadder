@@ -129,7 +129,7 @@ def gen_config(cli_options=None):
             "Press",
             "'c' to continue,",
             "'s' to quit and save,",
-            "or 'q' to quit and abort",
+            "or 'q' to quit and abort ",
         ])
         response = raw_input(prompt)
         if 'c' == response:
