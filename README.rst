@@ -1,18 +1,17 @@
-.. image:: https://travis-ci.org/mvk/sshadder.svg?branch=master
-    :target: https://travis-ci.org/mvk/sshadder
-
-
-.. image:: logo.200x200.png
-    :target: https://mvk.github.com/sshadder
-
 ========
 SSHAdder
 ========
+
+.. image:: logo.200x200.png
+    :target: https://mvk.github.com/sshadder
 
 
 
 About
 =====
+
+.. image:: https://travis-ci.org/mvk/sshadder.svg?branch=master
+    :target: https://travis-ci.org/mvk/sshadder
 
 ssh keys manager for multiple password protected keys.
 Stop adding them manually.
