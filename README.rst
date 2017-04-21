@@ -1,35 +1,69 @@
 .. image:: https://travis-ci.org/mvk/sshadder.svg?branch=master
     :target: https://travis-ci.org/mvk/sshadder
 
-=====
+
+.. image:: logo.200x200.png
+    :target: https://mvk.github.com/sshadder
+
+========
+SSHAdder
+========
+
+
+
 About
 =====
 
+ssh keys manager for multiple password protected keys.
+Stop adding them manually.
 
-During CLI work I often am using multiple password protected ssh keys.
 
-Multiple keys.  
+What it does
+------------
 
-Then I need to load them, and it takes a minute or two.
+Defines key bundles and allows adding all of keys in the bundle to a running ssh-agent
 
-This project aims to save that time.
+What it does not
+----------------
 
-Installing
-==========
+* aims at *command line* only, no graphic desktop/dependency. no DBus (no need)
+* does not compete with full-on private keys managers like Seahorse_
+* ``ssh-agent`` management. You run it, and have ``SSH_AUTH_SOCK`` properly pointing to the desired SSH Agent process
 
-in virtualenv: ::
+
+Installation
+============
+
+Run in virtualenv: ::
+
     pip install git+ssh://git@github.com/mvk/sshadder.git
 
-system-wide:    
-I think this project is too young to be packaged or installed system-wide. Honestly :)
+
+NOTE: The crypto path is not yet vetted, so do not install this system-wide just yet. Honestly :)
+
 
 Usage
 =====
 
-First time:
------------
+Prerequisites:
+--------------
 
-Just run: ::
+Running and visible ``ssh-agent``
+
+Normally:
+---------
+
+Run: ::
+
+    sshadder
+
+Please refer to ``--help``, which shows default locations it's looking for the yaml files.
+
+
+Initialization:
+---------------
+
+Run: ::
 
     sshadder -i
 
@@ -38,26 +72,14 @@ The text will guide you to give a master password (not saved anywhere), and then
 * key file path
 * key password
 
-When you're ready, choose 's' option to save and quit. Each password is encrypted and then ``base64.b64encode()``-ed and added to the key json item, so the text file is kept as it is now - text file.
+When you're ready, choose 's' option to save and quit.
 
-Next times:
------------
-
-Run: ::
-
-    sshadder
-
-Please refer to ``--help``, which shows default locations it's looking for the yaml files.
-
-What it does not
-~~~~~~~~~~~~~~~~
-
-SSH Agent management. You are responsible to run it, and have ``SSH_AUTH_SOCK`` properly pointing to the desired SSH Agent.
-
-What it does
-~~~~~~~~~~~~
+What is actually happening
+--------------------------
 
 Given config file ``.sshagent.yml`` and master password, the utility adds all the ssh key files using their passwords ``YAML`` file keeps the key passwords encrypted using simple-crypt package.
+Each password is encrypted and then encoded using ``Base64`` and added to the key item.
+The text file is kept as it is now - text file.
 
 Not sure how REALLY safe it is, but it is safer than plain text shell scripts.
 
@@ -65,16 +87,16 @@ Not sure how REALLY safe it is, but it is safer than plain text shell scripts.
 Current known security problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``pexpect.spawn()`` is used here. Not sure how safe it is. If this is VERY unsafe for you, please send a patch/pull request :)
+As long as ``pexpect.spawn()`` is used here, it means if your system is compromised and rogue user can access your ``/proc``, they probably can see the passwords passed to ssh-agent in clear text.
+If this is VERY unsafe for you, please send a patch/pull request :)
 
 
 Contributing
 ============
 
-Patches/pull requests are welcome to improve the code/fix bugs.
+Patches/pull/feature requests are welcome to improve the code/fix bugs.
+Note I'm quite a busy person, so if you can fix/add it - send me a patch/pull-request.
 
-Let's try to avoid integrating with anything like lastpass, i.e. no external services in the meanwhile.
 
-Keepass integration would be nice though, given it's local (it could be non-local nowadays)
+.. _SeaHorse: https://wiki.gnome.org/Apps/Seahorse
 
-If you have any other "better" ideas, please share, and I might be convinced.
