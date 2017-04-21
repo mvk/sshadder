@@ -3,7 +3,7 @@ SSHAdder
 ========
 
 .. image:: logo.200x200.png
-    :target: https://mvk.github.com/sshadder
+    :target: https://github.com/mvk/sshadder
 
 
 
@@ -35,7 +35,7 @@ Installation
 
 Run in virtualenv: ::
 
-    pip install git+ssh://git@github.com/mvk/sshadder.git
+    pip install https://github.com/mvk/sshadder.git
 
 
 NOTE: The crypto path is not yet vetted, so do not install this system-wide just yet. Honestly :)
