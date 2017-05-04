@@ -3,11 +3,12 @@ import simplecrypt
 import base64
 from sshadder import sshadder
 
+
 def test_simple_encryptor():
     password = 'myc00lp@ssw0rd'
-    expected = 'myc00lerp@ssw0rd!'
-    cipher = sshadder.simple_encryptor(password, expected)
-    actual = simplecrypt.decrypt(password, base64.b64decode(cipher)).encode('utf-8')
+    expected = str('myc00lerp@ssw0rd!').encode('utf-8')
+    cipher = sshadder.simple_encryptor(password, expected.decode('utf-8'))
+    actual = simplecrypt.decrypt(password, base64.b64decode(cipher))
     assert expected == actual
 
 

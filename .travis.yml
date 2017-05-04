@@ -1,10 +1,27 @@
+# vim: ts=2 sw=2 et ft=yaml
+---
+sudo: false
 language: python
-python: 2.7
-env:
- - TOX_ENV=py27
- - TOX_ENV=flake8
+matrix:
+ include:
+ - python: "2.7"
+   os: linux
+   dist: trusty
+   env: TOXENV=py27
+ - python: "3.4"
+   os: linux
+   dist: trusty
+   env: TOXENV=py34
+ - python: "3.5"
+   os: linux
+   dist: trusty
+   env: TOXENV=py35
+before_install:
+ # Show the current setuptools version
+ - python -c "import setuptools; print(setuptools.__version__)"
 install:
- - pip install tox
+ - pip install wheel tox
+ - python setup.py install bdist_wheel
+ - pip install dist/sshadder-*.whl
 script:
- - tox -e $TOX_ENV
-
+ - tox -e ${TOXENV} --installpkg ./dist/sshadder-*.whl

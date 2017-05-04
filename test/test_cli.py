@@ -107,4 +107,3 @@ def test_parse_args():
     for key, value in expected_as_dict.items():
         assert hasattr(actual, key)
         assert getattr(actual, key) == value
-

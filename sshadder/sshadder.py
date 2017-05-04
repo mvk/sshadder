@@ -201,14 +201,16 @@ def simple_decryptor(password, ciphertext, enc='utf-8', unwrapper=None):
     return plaintext
 
 
-def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
+def simple_encryptor(password, ciphertext, enc=None, wrapper=None):
     """
     Decrypt ciphertext using password
 
     """
+    if enc is None:
+        enc = 'utf-8'
     if not wrapper:
         wrapper = base64.b64encode
-    ciphertext = simplecrypt.encrypt(password, ciphertext.encode(enc))
+    ciphertext = simplecrypt.encrypt(password.encode(enc), ciphertext.encode(enc))
     return wrapper(ciphertext)
 
 
