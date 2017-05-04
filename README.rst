@@ -56,7 +56,7 @@ Run: ::
 
     sshadder
 
-Please refer to ``--help``, which shows default locations it's looking for the yaml files.
+Please refer to ``--help``, which shows default locations it's looking for the JSON files.
 
 
 Initialization:
@@ -76,7 +76,7 @@ When you're ready, choose 's' option to save and quit.
 What is actually happening
 --------------------------
 
-Given config file ``.sshagent.yml`` and master password, the utility adds all the ssh key files using their passwords ``YAML`` file keeps the key passwords encrypted using simple-crypt package.
+Given config file ``.sshagent.json`` and master password, the utility adds all the ssh key files using their passwords ``JSON`` file keeps the key passwords encrypted using simple-crypt package.
 Each password is encrypted and then encoded using ``Base64`` and added to the key item.
 The text file is kept as it is now - text file.
 

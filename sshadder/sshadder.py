@@ -12,7 +12,7 @@ import pexpect
 import pkg_resources
 import simplecrypt
 
-DEFAULT_CONF_FILE = 'sshadder.yaml'
+DEFAULT_CONF_FILE = 'sshadder.json'
 USER_HOME = os.environ.get('HOME', os.path.expanduser('~'))
 DEFAULT_SSH_HOME = os.path.join(USER_HOME, '.ssh')
 DEFAULT_SSH_KEY = os.path.join(DEFAULT_SSH_HOME, 'id_rsa')
