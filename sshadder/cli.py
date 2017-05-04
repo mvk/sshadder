@@ -87,5 +87,6 @@ def main():
         decryptor=sshadder.simple_decryptor
     )
 
+
 if __name__ == '__main__':
     sys.exit(main())
