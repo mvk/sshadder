@@ -1,23 +1,35 @@
 #!/usr/bin/env python
 # pylint: disable=missing-docstring
 from __future__ import print_function
+
 import argparse
 import base64
+import getpass
 import json
 import os
 import sys
-import getpass
 import pexpect
+import pkg_resources
 import simplecrypt
 
 DEFAULT_CONF_FILE = 'sshadder.yaml'
 USER_HOME = os.environ.get('HOME', os.path.expanduser('~'))
 DEFAULT_SSH_HOME = os.path.join(USER_HOME, '.ssh')
+DEFAULT_SSH_KEY = os.path.join(DEFAULT_SSH_HOME, 'id_rsa')
 DEFAULT_CONFS = [
     os.path.join(os.getcwd(), '.'.join(['', DEFAULT_CONF_FILE])),
     os.path.join(USER_HOME, DEFAULT_CONF_FILE),
     os.path.join('/etc/sshadder', DEFAULT_CONF_FILE),
 ]
+
+
+def get_version():
+    version = '0.0.0-unknown'
+    try:
+        version = pkg_resources.get_distribution('sshadder').version
+    except pkg_resources.DistributionNotFound:
+        pass
+    return version
 
 
 def getpass_double_prompt(description, max_attempts=3):
@@ -49,8 +61,8 @@ def get_config(cli_options=None):
     if not cli_options:
         return {}
     result = {}
-    result.update(ssh_home=DEFAULT_SSH_HOME)
-    result.update(keys=[os.path.join(DEFAULT_SSH_HOME, 'id_rsa')])
+    result.update(dict(ssh_home=DEFAULT_SSH_HOME))
+    result.update(dict(keys=[os.path.join(DEFAULT_SSH_HOME, 'id_rsa')]))
     conf_files = cli_options.get('conf_file')
     for conf_file in conf_files:
         if not os.path.exists(conf_file):
@@ -77,7 +89,7 @@ def gen_config(cli_options=None):
         cli_options = dict(config_data=dict(keys=[]))
     # config_data = cli_options.get("config_data", dict(keys=[]))
     prompt_fmt = "Enter config file path [default: {0}]: "
-    config_fname = raw_input(prompt_fmt.format(DEFAULT_CONFS[0]))
+    config_fname = input(prompt_fmt.format(DEFAULT_CONFS[0]))
     if not config_fname:
         config_fname = cli_options.get("config_fname", DEFAULT_CONFS[0])
 
@@ -95,7 +107,7 @@ def gen_config(cli_options=None):
     enough = False
     save = False
     while not enough:
-        key_path = raw_input("Enter private key file name: ")
+        key_path = input("Enter private key file name: ")
         if not os.path.exists(key_path):
             print("WARNING: the file given does not exist")
             continue
@@ -128,7 +140,7 @@ def gen_config(cli_options=None):
             "'s' to quit and save,",
             "or 'q' to quit and abort ",
         ])
-        response = raw_input(prompt)
+        response = input(prompt)
         if response == 'c':
             continue
         elif response == 'q':
@@ -146,65 +158,7 @@ def gen_config(cli_options=None):
         wfd.write(json.dumps(dict(keys=keys_data), indent=2))
 
 
-def strlist(data):
-    if not isinstance(data, str) or data is None:
-        raise argparse.ArgumentTypeError(" ".join([
-            "this parameter must be a string,"
-            "optionally delimited with ','",
-        ]))
-    return data.split(',')
-
-
-class CoolFormatter(argparse.RawTextHelpFormatter):
-    def _get_help_string(self, action):
-        _help = action.help
-        if '%(default)' not in action.help:
-            if action.default is not argparse.SUPPRESS:
-                defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
-                if action.option_strings or action.nargs in defaulting_nargs:
-                    _help += '\n[default: %(default)s]'
-        return _help
-
-
-def parse_args(args=None):
-
-    if args is None:
-        args = sys.argv[1:]
-
-    parser = argparse.ArgumentParser(
-        description="Bulk Loader of SSH private keys",
-        formatter_class=CoolFormatter
-    )
-    parser.add_argument(
-        '--init', '-i',
-        action='store_true',
-        dest='init',
-        help='Create configuration file',
-    )
-    parser.add_argument(
-        '--conf', '-c',
-        dest='conf_file',
-        help='Specify sshadder config yaml file',
-        default=DEFAULT_CONFS,
-    )
-    parser.add_argument(
-        '--dotssh', '-s',
-        dest='ssh_home',
-        help='Alternative location for the private keys',
-        default=DEFAULT_SSH_HOME,
-    )
-    parser.add_argument(
-        '--keys', '-k',
-        dest='keys',
-        help="Comma separated list of private keys to load in bulk",
-        default=[os.path.join(DEFAULT_SSH_HOME, 'id_rsa')],
-        type=strlist
-    )
-    result = parser.parse_args(args=args)
-    return result
-
-
-def ssh_add(key, password):
+def ssh_add(key, password=None):
     """
     Adds a keyfile protected by PLAIN TEXT password
 
@@ -224,7 +178,7 @@ def ssh_add(key, password):
     ssh_adder.sendline(password)
     try:
         ssh_adder.expect(pexpect.EOF, timeout=0.5)
-    except pexpect.ExceptionPexpect, epe:
+    except pexpect.ExceptionPexpect as epe:
         print("FAILED [exception data follows]")
         print("pexpect error: {epe}".format(epe=epe), file=sys.stderr)
         return 1
@@ -258,10 +212,13 @@ def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
     return wrapper(ciphertext)
 
 
-def add_keys(keys, master_password, decryptor=None):
+def add_keys(keys, master_password=None, decryptor=None):
+    if master_password is None:
+        master_password = getpass.getpass("Enter master password: ")
 
     if not decryptor:
         # pylint: disable=unused-argument
+        # noinspection PyUnusedLocal
         def _decryptor(password, password_hashed):
             return password
         decryptor = _decryptor
@@ -280,23 +237,3 @@ def add_keys(keys, master_password, decryptor=None):
         assert result == 0, \
             "Failed to add a key: {key_file}".format(**locals())
     return 0
-
-
-def main():
-    cli_options = parse_args(args=sys.argv[1:])
-    config = get_config(cli_options=cli_options.__dict__)
-    if cli_options.init:
-        # initial setup flow:
-        result = gen_config(cli_options.__dict__)
-        return result
-
-    master_password = getpass.getpass("Enter master password: ")
-    return add_keys(
-        config.get('keys'),
-        master_password,
-        decryptor=simple_decryptor
-    )
-
-
-if __name__ == '__main__':
-    sys.exit(main())
