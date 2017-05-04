@@ -1,21 +1,22 @@
 #!/usr/bin/env python
+# pylint: disable=missing-docstring
 from __future__ import print_function
 import argparse
-import getpass
+import base64
 import json
 import os
-import pexpect
 import sys
-import base64
+import getpass
+import pexpect
 import simplecrypt
 
-default_conf_file = 'sshadder.yaml'
-user_home = os.environ.get('HOME', os.path.expanduser('~'))
-default_ssh_home = os.path.join(user_home, '.ssh')
-default_confs = [
-    os.path.join(os.getcwd(), '.'.join(['', default_conf_file])),
-    os.path.join(user_home, default_conf_file),
-    os.path.join('/etc/sshadder', default_conf_file),
+DEFAULT_CONF_FILE = 'sshadder.yaml'
+USER_HOME = os.environ.get('HOME', os.path.expanduser('~'))
+DEFAULT_SSH_HOME = os.path.join(USER_HOME, '.ssh')
+DEFAULT_CONFS = [
+    os.path.join(os.getcwd(), '.'.join(['', DEFAULT_CONF_FILE])),
+    os.path.join(USER_HOME, DEFAULT_CONF_FILE),
+    os.path.join('/etc/sshadder', DEFAULT_CONF_FILE),
 ]
 
 
@@ -23,12 +24,8 @@ def getpass_double_prompt(description, max_attempts=3):
     result = None
     count = 0
     while not result:
-        password1 = getpass.getpass(
-            "Enter {description}: ".format(**locals())
-        )
-        password2 = getpass.getpass(
-            "Repeat {description}: ".format(**locals())
-        )
+        password1 = getpass.getpass(" ".join(["Enter", description + ":", ""]))
+        password2 = getpass.getpass(" ".join(["Repeat", description + ":", ""]))
         if password1 != password2:
             count += 1
             msg_fmt = " ".join([
@@ -52,16 +49,16 @@ def get_config(cli_options=None):
     if not cli_options:
         return {}
     result = {}
-    result.update(ssh_home=default_ssh_home)
-    result.update(keys=[os.path.join(default_ssh_home, 'id_rsa')])
+    result.update(ssh_home=DEFAULT_SSH_HOME)
+    result.update(keys=[os.path.join(DEFAULT_SSH_HOME, 'id_rsa')])
     conf_files = cli_options.get('conf_file')
     for conf_file in conf_files:
         if not os.path.exists(conf_file):
             continue
         if not os.path.isfile(conf_file):
             continue
-        with open(conf_file, 'rb') as f:
-            curr_conf_data = json.loads(f.read())
+        with open(conf_file, 'rb') as rfd:
+            curr_conf_data = json.loads(rfd.read())
             ssh_home = curr_conf_data.get('ssh_home', result.get('ssh_home'))
             keys = []
             if 'keys' in curr_conf_data:
@@ -78,11 +75,11 @@ def get_config(cli_options=None):
 def gen_config(cli_options=None):
     if not cli_options:
         cli_options = dict(config_data=dict(keys=[]))
-    config_data = cli_options.get("config_data", dict(keys=[]))
+    # config_data = cli_options.get("config_data", dict(keys=[]))
     prompt_fmt = "Enter config file path [default: {0}]: "
-    config_fname = raw_input(prompt_fmt.format(default_confs[0]))
+    config_fname = raw_input(prompt_fmt.format(DEFAULT_CONFS[0]))
     if not config_fname:
-        config_fname = cli_options.get("config_fname", default_confs[0])
+        config_fname = cli_options.get("config_fname", DEFAULT_CONFS[0])
 
     assert os.path.isdir(os.path.dirname(config_fname))
     keys_data = []
@@ -112,7 +109,7 @@ def gen_config(cli_options=None):
                 "Key {key_path} password".format(**locals()),
                 max_attempts=1
             )
-        except argparse.ArgumentError, ae:
+        except argparse.ArgumentError:
             print("WARNING: Failed to accept key password.")
         if not key_password_plain:
             print("Automatically re-iterating")
@@ -132,12 +129,12 @@ def gen_config(cli_options=None):
             "or 'q' to quit and abort ",
         ])
         response = raw_input(prompt)
-        if 'c' == response:
+        if response == 'c':
             continue
-        elif 'q' == response:
+        elif response == 'q':
             enough = True
             save = False
-        elif 's' == response:
+        elif response == 's':
             enough = True
             save = True
 
@@ -145,8 +142,8 @@ def gen_config(cli_options=None):
         print("Not saving anything")
         return 0
 
-    with open(config_fname, 'wb') as fd:
-        fd.write(json.dumps(dict(keys=keys_data), indent=2))
+    with open(config_fname, 'wb') as wfd:
+        wfd.write(json.dumps(dict(keys=keys_data), indent=2))
 
 
 def strlist(data):
@@ -160,16 +157,20 @@ def strlist(data):
 
 class CoolFormatter(argparse.RawTextHelpFormatter):
     def _get_help_string(self, action):
-        help = action.help
+        _help = action.help
         if '%(default)' not in action.help:
             if action.default is not argparse.SUPPRESS:
                 defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
                 if action.option_strings or action.nargs in defaulting_nargs:
-                    help += '\n[default: %(default)s]'
-        return help
+                    _help += '\n[default: %(default)s]'
+        return _help
 
 
-def parse_args(args=sys.argv[1:]):
+def parse_args(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = argparse.ArgumentParser(
         description="Bulk Loader of SSH private keys",
         formatter_class=CoolFormatter
@@ -184,19 +185,19 @@ def parse_args(args=sys.argv[1:]):
         '--conf', '-c',
         dest='conf_file',
         help='Specify sshadder config yaml file',
-        default=default_confs,
+        default=DEFAULT_CONFS,
     )
     parser.add_argument(
         '--dotssh', '-s',
         dest='ssh_home',
         help='Alternative location for the private keys',
-        default=default_ssh_home,
+        default=DEFAULT_SSH_HOME,
     )
     parser.add_argument(
         '--keys', '-k',
         dest='keys',
         help="Comma separated list of private keys to load in bulk",
-        default=[os.path.join(default_ssh_home, 'id_rsa')],
+        default=[os.path.join(DEFAULT_SSH_HOME, 'id_rsa')],
         type=strlist
     )
     result = parser.parse_args(args=args)
@@ -213,7 +214,7 @@ def ssh_add(key, password):
     :type password: str
 
     """
-    print("Adding the key: {key} ... ".format(**locals()), end='')
+    print("Adding the key: {key} ... ".format(key=key), end='')
     ssh_add_cmd = 'ssh-add {key}'
     ssh_adder = pexpect.spawn(ssh_add_cmd.format(**locals()))
     ssh_adder.expect(
@@ -223,9 +224,9 @@ def ssh_add(key, password):
     ssh_adder.sendline(password)
     try:
         ssh_adder.expect(pexpect.EOF, timeout=0.5)
-    except pexpect.ExceptionPexpect, pe:
+    except pexpect.ExceptionPexpect, epe:
         print("FAILED [exception data follows]")
-        print("pexpect error: {pe}".format(**locals()), file=sys.stderr)
+        print("pexpect error: {epe}".format(epe=epe), file=sys.stderr)
         return 1
     print("Done".format(**locals()))
     return 0
@@ -253,15 +254,17 @@ def simple_encryptor(password, ciphertext, enc='utf-8', wrapper=None):
     """
     if not wrapper:
         wrapper = base64.b64encode
-    ciphertext = simplecrypt.encrypt(password, ciphertext)
+    ciphertext = simplecrypt.encrypt(password, ciphertext.encode(enc))
     return wrapper(ciphertext)
 
 
 def add_keys(keys, master_password, decryptor=None):
 
     if not decryptor:
-        def decryptor(x, y):
-            return x
+        # pylint: disable=unused-argument
+        def _decryptor(password, password_hashed):
+            return password
+        decryptor = _decryptor
 
     for key_item in keys:
         if not isinstance(key_item, dict):
@@ -274,7 +277,7 @@ def add_keys(keys, master_password, decryptor=None):
             key_file,
             decryptor(master_password, key_password_hashed)
         )
-        assert 0 == result,\
+        assert result == 0, \
             "Failed to add a key: {key_file}".format(**locals())
     return 0
 
