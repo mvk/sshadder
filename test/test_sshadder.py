@@ -1,38 +1,7 @@
 import argparse
-import sshadder.sshadder as sshadder
 import simplecrypt
 import base64
-
-
-def test_strlist():
-    input_item = None
-    try:
-        sshadder.strlist(input_item)
-        assert False, "unexpected no error"
-    except argparse.ArgumentTypeError:
-        assert True
-    else:
-        assert False, "unexpected error type"
-
-    input_item = ["s"]
-    try:
-        sshadder.strlist(input_item)
-        assert False, "unexpected no error"
-    except argparse.ArgumentTypeError:
-        assert True
-    else:
-        assert False, "unexpected error type"
-
-    input_item = ""
-    expected = [""]
-    actual = sshadder.strlist(input_item)
-    assert expected == actual
-
-    input_item = "a,b"
-    expected = ["a", "b"]
-    actual = sshadder.strlist(input_item)
-    assert expected == actual
-
+from sshadder import sshadder
 
 def test_simple_encryptor():
     password = 'myc00lp@ssw0rd'
