@@ -18,7 +18,7 @@ DEFAULT_SSH_HOME = os.path.join(USER_HOME, '.ssh')
 DEFAULT_SSH_KEY = os.path.join(DEFAULT_SSH_HOME, 'id_rsa')
 DEFAULT_CONFS = [
     os.path.join(os.getcwd(), '.'.join(['', DEFAULT_CONF_FILE])),
-    os.path.join(USER_HOME, DEFAULT_CONF_FILE),
+    os.path.join(USER_HOME, '.'.join(['', DEFAULT_CONF_FILE])),
     os.path.join('/etc/sshadder', DEFAULT_CONF_FILE),
 ]
 
