@@ -73,6 +73,7 @@ def parse_args(args=None):
 
 def main():
     cli_options = parse_args(args=sys.argv[1:])
+    sshadder.ensure_ssh_agent()
     config = sshadder.get_config(cli_options=cli_options.__dict__)
     if cli_options.version:
         print("sshadder v{version}".format(version=sshadder.get_version()))

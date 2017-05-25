@@ -7,6 +7,7 @@ import base64
 import getpass
 import json
 import os
+import stat
 import sys
 import pexpect
 import pkg_resources
@@ -55,6 +56,32 @@ def getpass_double_prompt(description, max_attempts=3):
             message=msg_fmt.format(**locals())
         )
     return result
+
+def short_help():
+    print("\n".join([
+        "Please ensure ssh-agent is running and:",
+        "  - its environment variable SSH_AUTH_SOCK is properly set",
+        "  - the environment variable is pointing to correct socket file",
+        "",
+    ]))
+
+def ensure_ssh_agent():
+    ssh_agent_sock = 'SSH_AUTH_SOCK'
+    if ssh_agent_sock not in os.environ:
+        print("FATAL: environment variable {ssh_agent_sock} is unset.".format(**locals()))
+        short_help()
+        sys.exit(1)
+    if not os.path.exists(os.environ.get(ssh_agent_sock)):
+        print("FATAL: environment variable {ssh_agent_sock} does not point to an existing file.".format(**locals()))
+        short_help()
+        sys.exit(1)
+
+    sock_mode = os.stat(os.environ.get('SSH_AUTH_SOCK')).st_mode
+    if not stat.S_ISSOCK(sock_mode):
+        print("FATAL: environment variable {ssh_agent_sock} does not point to a socket.".format(**locals()))
+        short_help()
+        sys.exit(1)
+    print("{ssh_agent_sock} variable is OK".format(**locals()))
 
 
 def get_config(cli_options=None):
@@ -168,7 +195,7 @@ def ssh_add(key, password=None):
     :type password: str
 
     """
-    print("Adding the key: {key} ... ".format(key=key), end='')
+    print("Adding: {key} ... ".format(key=key), end='')
     ssh_add_cmd = 'ssh-add {key}'
     ssh_adder = pexpect.spawn(ssh_add_cmd.format(**locals()))
     ssh_adder.expect(
