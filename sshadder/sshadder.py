@@ -57,6 +57,7 @@ def getpass_double_prompt(description, max_attempts=3):
         )
     return result
 
+
 def short_help():
     print("\n".join([
         "Please ensure ssh-agent is running and:",
@@ -64,6 +65,7 @@ def short_help():
         "  - the environment variable is pointing to correct socket file",
         "",
     ]))
+
 
 def ensure_ssh_agent():
     ssh_agent_sock = 'SSH_AUTH_SOCK'
