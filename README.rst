@@ -13,22 +13,22 @@ About
 .. image:: https://travis-ci.org/mvk/sshadder.svg?branch=master
     :target: https://travis-ci.org/mvk/sshadder
 
-ssh keys manager for multiple password protected keys.
+ssh keys manager for multiple password protected private keys written currently in Python. 
 Stop adding them manually.
 
 
 What it does
 ------------
 
-Defines key bundles and allows adding all of keys in the bundle to a running ssh-agent
+Defines key bundles and allows adding all of keys in the bundle to a running ssh-agent 
+In a way it is like GNU_Keychain_, but does not force you to type in all your passwords, thank you @jamiesonbecker!
 
 What it does not
 ----------------
 
-* graphic desktop support or D-Bus
-* compete with "real" private info managers like Seahorse_
+* graphic desktop, messaging a lá D-Bus and the likes
+* compete with real private keys managers like Seahorse_, LastPass_, KeePass_
 * manage ``ssh-agent``
-
 
 Installation
 ============
@@ -37,9 +37,7 @@ Run in virtualenv: ::
 
     pip install sshadder
 
-
 NOTE: The crypto path is not yet vetted, so do not install this system-wide just yet. Honestly :)
-
 
 Usage
 =====
@@ -108,5 +106,18 @@ Contributing
 Patches/pull/feature requests are welcome to improve the code/fix bugs.
 Note I'm quite a busy person, so if you can fix/add it - send me a patch/pull-request.
 
+
+Related Tools:
+==============
+
+* SeaHorse_
+* LastPass_
+* GNU_Keychain_  
+
+
 .. _SeaHorse: https://wiki.gnome.org/Apps/Seahorse
+.. _LastPass: https://lastpass.com
+.. _KeePass: http://keepass.info
+.. _GNU_Keychain: http://www.funtoo.org/Keychain
+
 
