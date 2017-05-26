@@ -26,7 +26,7 @@ What it does not
 ----------------
 
 * graphic desktop support or D-Bus
-* compete with full-on private keys managers like Seahorse_
+* compete with "real" private info managers like Seahorse_
 * manage ``ssh-agent``
 
 
@@ -47,20 +47,13 @@ Usage
 Prerequisites:
 --------------
 
-Running and visible ``ssh-agent``
+So that ``sshadder`` can work we need:
 
-Normally:
----------
+* Running process of ``ssh-agent``
+* Environment variable ``SSH_AUTH_SOCK`` pointing to that running process
 
-Run: ::
-
-    sshadder
-
-Please refer to ``--help``, which shows default locations it's looking for the JSON files.
-
-
-Initialization:
----------------
+Setup:
+------
 
 Run: ::
 
@@ -72,6 +65,16 @@ The text will guide you to give a master password (not saved anywhere), and then
 * password
 
 When you're done, choose 's' option to save and quit.
+
+Regular Use:
+------------
+
+Run: ::
+
+    sshadder
+
+Please refer to ``--help``, which shows default locations it's looking for the JSON files.
+
 
 What is actually happening
 --------------------------
