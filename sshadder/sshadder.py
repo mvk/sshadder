@@ -12,6 +12,7 @@ import sys
 import pexpect
 import pkg_resources
 import simplecrypt
+import subprocess
 
 DEFAULT_CONF_FILE = 'sshadder.json'
 USER_HOME = os.environ.get('HOME', os.path.expanduser('~'))
@@ -85,6 +86,20 @@ def ensure_ssh_agent():
         sys.exit(1)
     print("{ssh_agent_sock} variable is OK".format(**locals()))
 
+
+def count_loaded_keys():
+
+    proc = subprocess.Popen(
+        ["ssh-add", "-l"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    proc.communicate()
+    assert proc.status == 0
+    if not len(proc.stdout):
+        return 0
+    result = proc.stdout.splitlines()
+    return len(result)
 
 def get_config(cli_options=None):
     if not cli_options:
@@ -243,9 +258,15 @@ def simple_encryptor(password, ciphertext, enc=None, wrapper=None):
     return wrapper(ciphertext)
 
 
-def add_keys(keys, master_password=None, decryptor=None):
+def add_keys(keys, master_password=None, decryptor=None, force=False):
     if master_password is None:
         master_password = getpass.getpass("Enter master password: ")
+
+    count = count_loaded_keys()
+    if count == 0:
+        if not force:
+            print("INFO: SSH Agent has already keys loaded. To re-add keys rerun `sshadder -f`")
+            sys.exit(0)
 
     if not decryptor:
         # pylint: disable=unused-argument
