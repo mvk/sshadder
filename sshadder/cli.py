@@ -40,6 +40,12 @@ def parse_args(args=None):
         help='Create configuration file',
     )
     parser.add_argument(
+        '--force', '-f',
+        action='store_true',
+        dest='force',
+        help='Force keys loading',
+    )
+    parser.add_argument(
         '--conf', '-c',
         dest='conf_file',
         help='Specify sshadder config yaml file',
@@ -54,7 +60,7 @@ def parse_args(args=None):
     parser.add_argument(
         '--keys', '-k',
         dest='keys',
-        help="Comma separated list of private keys to load in bulk",
+        help='Comma separated list of private keys to load in bulk',
         default=[sshadder.DEFAULT_SSH_KEY],
         type=strlist
     )
@@ -85,7 +91,8 @@ def main():
 
     return sshadder.add_keys(
         config.get('keys'),
-        decryptor=sshadder.simple_decryptor
+        decryptor=sshadder.simple_decryptor,
+        force=cli_options.force
     )
 
 
