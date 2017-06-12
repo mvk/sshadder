@@ -9,10 +9,10 @@ import json
 import os
 import stat
 import sys
+import subprocess
 import pexpect
 import pkg_resources
 import simplecrypt
-import subprocess
 
 DEFAULT_CONF_FILE = 'sshadder.json'
 USER_HOME = os.environ.get('HOME', os.path.expanduser('~'))
@@ -75,13 +75,19 @@ def ensure_ssh_agent():
         short_help()
         sys.exit(1)
     if not os.path.exists(os.environ.get(ssh_agent_sock)):
-        print("FATAL: environment variable {ssh_agent_sock} does not point to an existing file.".format(**locals()))
+        err_message = "FATAL: environment variable "
+        err_message += ssh_agent_sock
+        err_message += " does not point to an existing file."
+        print(err_message)
         short_help()
         sys.exit(1)
 
     sock_mode = os.stat(os.environ.get('SSH_AUTH_SOCK')).st_mode
     if not stat.S_ISSOCK(sock_mode):
-        print("FATAL: environment variable {ssh_agent_sock} does not point to a socket.".format(**locals()))
+        err_message = "FATAL: environment variable "
+        err_message += ssh_agent_sock
+        err_message += " does not point to a socket."
+        print(err_message)
         short_help()
         sys.exit(1)
     print("{ssh_agent_sock} variable is OK".format(**locals()))
@@ -94,12 +100,14 @@ def count_loaded_keys():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    proc.communicate()
-    assert proc.status == 0
-    if not len(proc.stdout):
+    # pylint: disable=unused-variable
+    out, err = proc.communicate()
+    assert proc.returncode == 0
+    if not out:
         return 0
-    result = proc.stdout.splitlines()
+    result = out.splitlines()
     return len(result)
+
 
 def get_config(cli_options=None):
     if not cli_options:
