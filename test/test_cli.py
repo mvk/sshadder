@@ -10,8 +10,8 @@ def test_strlist():
         assert False, "unexpected no error"
     except cli.argparse.ArgumentTypeError:
         assert True
-    except:
-        assert False, "unexpected error type"
+    # else:
+    #     assert False, "unexpected error type"
 
     input_item = ["s"]
     try:
@@ -19,8 +19,8 @@ def test_strlist():
         assert False, "unexpected no error"
     except cli.argparse.ArgumentTypeError:
         assert True
-    except:
-        assert False, "unexpected error type"
+    # else:
+    #     assert False, "unexpected error type"
 
     input_item = ""
     expected = [""]
